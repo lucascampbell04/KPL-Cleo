@@ -146,7 +146,7 @@ app.post('/chat', requireAuth, async (req, res) => {
       // Make the API call
       const response = await openai.createChatCompletion(
         {
-          model: 'gpt-3.5-turbo',
+          model: 'gpt-3.5-turbo-16k',
           messages: conversation,
         },
         {
@@ -264,7 +264,7 @@ app.post('/chat', requireAuth, async (req, res) => {
         // Make the API call
         const response = await openai.createChatCompletion(
           {
-            model: 'gpt-3.5-turbo',
+            model: 'gpt-3.5-turbo-16k',
             messages: conversation,
           },
           {
