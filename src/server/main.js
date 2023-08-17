@@ -19,15 +19,31 @@ const openai = new OpenAIApi(config);
 const mongoURL = process.env.MONGOURL;
 const dbName = 'Cluster0';
 const app = express();
+const upload = multer({ dest: 'uploads/' });
 
 // Mongoose setup
 mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true });
 const userSchema = new mongoose.Schema({
-  _id: ObjectId,
-  name: String,
-  email: String,
-  password: String,
-  chatHistory: Object,
+  _id: {
+    type: ObjectId,
+    required: true,
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  chatHistory: {
+    type: Object,
+    required: true,
+  },
 });
 const User = mongoose.model('User', userSchema);
 
@@ -404,8 +420,6 @@ app.get('/conversation/:chatId', requireAuth, async (req, res) => {
   }
 });
 
-const upload = multer({ dest: 'uploads/' });
-
 app.post('/convert', requireAuth, upload.single('file'), async (req, res) => {
   const file = req.file;
   if (!file) {
@@ -429,6 +443,7 @@ app.post('/convert', requireAuth, upload.single('file'), async (req, res) => {
     return res.status(500).json({ error: 'Error processing file' });
   }
 });
+
 app.post('/signin', async (req, res) => {
   const client = new MongoClient(mongoURL);
   const { email, password, rememberMe } = req.body;
@@ -510,40 +525,36 @@ function requireAuth(req, res, next) {
   next();
 }
 
+
 async function createUser() {
-  const client = new MongoClient(mongoURL);
+  const name = 'Account holder name here';
+  const email = 'Account holder email here';
+  const password = 'Strong password here';
 
   try {
-    await client.connect();
-
-    const database = client.db(dbName); // Replace with your database name
-    const usersCollection = database.collection('users');
-
-    const name = 'first name here';
-    const email = 'kpl.gov email here';
-    const password = 'password here';
-
     // Hash the password with bcrypt
-    const saltRounds = 10;
+    const saltRounds = 10; // DO NOT change this, it's needed for login password comparison :)
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Generate a random user id (you can use ObjectId() from the 'mongodb' library)
+    // Generate a random user id (you can use new ObjectId() from the 'mongoose' library)
     const userId = new ObjectId();
 
-    const user = {
+    const newUser = new User({
       _id: userId,
       name: name,
       email: email,
       password: hashedPassword,
-    };
+      chatHistory: {test: 'test'},
+    });
 
-    // Insert the user document into the users collection
-    const result = await usersCollection.insertOne(user);
-    console.log('User created:', result.insertedId);
+    // Save the user document into the database
+    const savedUser = await newUser.save();
+    savedUser.chatHistory = {};
+    savedUser.save();
+    console.log('User created:', savedUser._id);
   } catch (error) {
     console.error('Error:', error);
   } finally {
-    client.close();
   }
 }
 

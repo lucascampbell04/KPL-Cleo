@@ -182,6 +182,24 @@ startConversationButton.addEventListener("click", async function () {
   deleteLoadingElement();
 });
 
+newChatInput.addEventListener('keydown', async function (event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+
+    showChat();
+    await startNewChat();
+    deleteLoadingElement();
+  }
+});
+
+newChatInput.addEventListener('keydown', function (event) {
+  if (event.key === 'Enter' && event.shiftKey) {
+    event.preventDefault();
+    const currentValue = newChatInput.value;
+    newChatInput.value = currentValue + '\n';
+  }
+});
+
 newChatInput.addEventListener("input", () => {
   if (newChatInput.value.trim().length > 0) {
     // Slide down and fade in the optionsDiv
@@ -349,6 +367,20 @@ async function startNewChat(fromFile, text, fileName) {
     console.error(error);
   }
 }
+
+chatbox.addEventListener('keydown', async function (event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+sendChat();
+  }
+});
+
+chatbox.addEventListener('keydown', function (event) {
+  if (event.key === 'Enter' && event.shiftKey) {
+    event.preventDefault();
+    const currentValue = chatbox.value;
+    chatbox.value = currentValue + '\n';
+  }
+});
 
 async function sendChat(fromFile, text, fileName) {
   const chatbox = document.getElementById('chatbox');
@@ -566,6 +598,7 @@ function showDashboard()  {
 
 function showNewChat()  {
   console.log('Showing new chat page');
+  newChatInput.value = '';
   sidebar.classList.remove('hidden', '-translate-x-full');
   sidebar.classList.add('lg:translate-x-0');
   const sections = document.querySelectorAll('section');
@@ -643,6 +676,7 @@ document.addEventListener('DOMContentLoaded', function() {
         userSignedIn = true;
         return response.json();
       } else {
+        showSignIn();
         console.error(`You're not logged in.`);
         return null; // Return null to stop further processing
       }
