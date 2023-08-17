@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.7.0/flowbite.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="node_modules/toastify-js/src/toastify.css">
+    <title>Vite App</title>
+    <style>
+      
+      .disabled {
+        opacity: 40%;
+        pointer-events: none;
+      }
+
+      #chats {
+        overflow-y: auto;
+    }
+      /* Custom styling for Toastify */
+.custom-toast {
+  font-weight: 500; /* Use bold text */
+  border-radius: 5px; /* Rounded border radius */
+  padding: 20px; /* Add padding for better appearance */
+  color: white; /* Text color */
+  pointer-events: none;
+}
+/* Custom styling for spinning transition */
+.spin {
+  animation: spin 0.3s linear infinite;
+}
+
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+    scale: 100%;
+  }
+  50% {
+    transform: rotate(180deg);
+    scale: 150%;
+  }
+  100% {
+    transform: rotate(360deg);
+    scale: 100%;
+  }
+}
+
+          .half {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .half.light .typing {
+      background-color: #e0e0e0;
+    }
+    
+    .half.dark {
+      background-color: #262626;
+    }
+    
+    .half.dark .typing {
+      background-color: #525252;
+    }
+    
+    .typing {
+      display: block;
+      width: 60px;
+      height: 40px;
+      border-radius: 20px;
+      margin: 0 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .circle {
+      display: block;
+      height: 10px;
+      width: 10px;
+      border-radius: 50%;
+      background-color: #8d8d8d;
+      margin: 3px;
+    }
+    
+    .circle.scaling {
+      animation: typing 1000ms ease-in-out infinite;
+      animation-delay: 3600ms;
+    }
+    
+    .circle.bouncing {
+      animation: bounce 1000ms ease-in-out infinite;
+      animation-delay: 3600ms;
+    }
+    
+    .circle:nth-child(1) {
+      animation-delay: 0ms;
+    }
+    
+    .circle:nth-child(2) {
+      animation-delay: 333ms;
+    }
+    
+    .circle:nth-child(3) {
+      animation-delay: 666ms;
+    }
+    
+    @keyframes typing {
+      0% {
+        transform: scale(1);
+      }
+      33% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.4);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+    
+    @keyframes bounce {
+      0% {
+        transform: translateY(0);
+      }
+      33% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+      100% {
+        transform: translateY(0);
+      }
+    }
+      textarea {
+        border-style: none;
+        border-color: Transparent;
+        overflow: auto;
+        outline: none;
+      }
+      #newchat {
+        overflow: auto;
+        outline: none;
+        transition: all;
+        transition-duration: 300ms;
+        transition-timing-function: ease-in-out;
+        position: relative; /* Set position to relative to make z-index work */
+        z-index: 1;
+      }
+      #newchat:focus {
+        box-shadow: 0 0 0 2px rgb(59, 130, 246);
+      }
+
+#options {
+  transition: transform 0.5s, opacity 0.5s; /* Add transition effects for smooth animation */
+  transform: translateY(-50px); /* Start with the optionsDiv slid up */
+  transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  opacity: 0; /* Start with the optionsDiv hidden */
+  position: relative; /* Set position to relative to make z-index work */
+  pointer-events: none;
+}
+.slide {
+  transform: translateX(0);
+  pointer-events: all;
+}
+.slide-back {
+  transform: translateX(-100%); /* Slide back to the original position */
+}
+.centered {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  /* bring your own prefixes */
+  transform: translate(-50%, -50%);
+}
+    </style>
+  </head>
+  <body class="dark:bg-slate-900">
+    <!-- Sidebar -->
+    
+<div id="application-sidebar" class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full transition-all duration-300 transform hidden fixed top-0 left-0 bottom-0 z-[60] w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto scrollbar-y lg:block lg:translate-x-0 lg:right-auto lg:bottom-0 dark:scrollbar-y dark:bg-slate-900 dark:border-slate-700">
+  <nav class="hs-accordion-group w-full h-full flex flex-col" data-hs-accordion-always-open>
+    <div class="flex flex-row items-center justify-center whitespace-nowrap space-x-4 pt-4">
+      <!-- Logo -->
+      <img class="w-10 h-10" src="kpl-logo.png"></img>
+      <h1 id="greetingText" class="text-black font-medium text-lg dark:text-gray-200">Please sign in</h1>
+      <!-- End Logo -->
+
+    </div>
+
+    <div class="h-screen flex flex-col overflow-hidden">
+      <!-- List -->
+      <ul id="sidebar-list" class="space-y-1.5 px-4">
+        <li class="pt-6">
+          <a id="new-button" class="flex items-center text-center justify-center gap-x-1.5 py-2 px-3 text-sm rounded-full text-white font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-300" href="javascript:;">
+            <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M8 2C8.47339 2 8.85714 2.38376 8.85714 2.85714V7.14286L13.1429 7.14286C13.6162 7.14286 14 7.52661 14 8C14 8.47339 13.6162 8.85714 13.1429 8.85714L8.85714 8.85715V13.1429C8.85714 13.6162 8.47339 14 8 14C7.52661 14 7.14286 13.6162 7.14286 13.1429V8.85715L2.85714 8.85715C2.38376 8.85715 2 8.4734 2 8.00001C2 7.52662 2.38376 7.14287 2.85714 7.14287L7.14286 7.14286V2.85714C7.14286 2.38376 7.52661 2 8 2Z" fill="currentColor"/>
+            </svg>
+            New chat
+          </a>
+        </li>
+        <li>
+          <hr class="h-2 mt-4 dark:border-slate-700">
+          <a id="dashboard-button" class="flex items-center gap-x-3 py-2 px-3 text-sm text-slate-700 rounded-md hover:bg-gray-100 dark:hover:bg-slate-800 dark:text-slate-400 dark:hover:text-slate-300 transition-all duration-300" href="javascript:;">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z"></path>
+            </svg>
+            Dashboard
+          </a>
+        </li>
+        <hr class="h-2 mt-4 dark:border-slate-700">
+      </ul>
+      <ul id="chats" class="space-y-1.5 px-4">
+
+      </ul>
+    <!-- Footer -->
+    <div class="z-40 bg-gray-50 dark:bg-slate-900 fixed bottom-0 left-0 w-full">
+      <div class="p-4 border-t border-gray-200 dark:border-slate-700">
+        <a id="signin-button" class="flex justify-between items-center gap-x-3 py-2 px-3 text-sm text-slate-700 rounded-md hover:bg-gray-100 dark:hover:bg-slate-800 dark:text-slate-400 dark:hover:text-slate-300 transition-all duration-300" href="javascript:;">
+          <span>Sign in</span>
+          <svg id="signInIcon" class="w-3.5 h-3.5 transition-all duration-300 ease-in-out" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"></path>
+          </svg>
+          <svg id="signOutIcon" class="w-3.5 h-3.5 transition-all duration-300 ease-in-out hidden" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"></path>
+          </svg>
+        </a>
+      </div>
+    </div>
+    <!-- End Footer -->
+  </div>
+
+  </nav>
+</div>
+<!-- End Sidebar -->
+
+<!-- Content -->
+<section id="chat" class="hidden">
+<div class="relative h-screen w-full lg:pl-64">
+  <div class="py-10 lg:py-14">
+    <ul id="chatContainer" class="space-y-5" style="max-height: 70vh; overflow-y: auto; scroll-behavior: smooth;">
+      <!-- Chats go here -->
+    </ul>
+  </div>
+
+  <!-- Search -->
+  <footer class="max-w-4xl mx-auto sticky bottom-0 z-10 p-3 sm:py-6">
+    <div class="lg:hidden flex justify-end mb-2 sm:mb-3">
+      <!-- Sidebar Toggle -->
+      <button type="button" class="p-2 inline-flex justify-center items-center gap-1.5 rounded-md border font-medium bg-white text-slate-700 shadow-sm align-middle hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-blue-600 transition-all text-xs dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-700 dark:text-gray-400 dark:hover:text-white dark:focus:ring-offset-gray-800" data-hs-overlay="#application-sidebar" aria-controls="application-sidebar" aria-label="Toggle navigation">
+        <svg class="w-3.5 h-3.5" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+        </svg>
+        <span>Sidebar</span>
+      </button>
+      <!-- End Sidebar Toggle -->
+    </div>
+
+    <!-- Input -->
+    <div class="relative group">
+      <textarea id="chatbox" class="px-4 pt-4 pb-0 block w-full bg-gray-100 border-gray-200 rounded-t-md text-sm border-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-400" placeholder="Ask me anything..." style="resize: none;"></textarea>
+      <div class="pb-12 pt-4 block w-full bg-gray-100 border-gray-200 rounded-b-md text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-gray-400"></div>
+      <div class="absolute bottom-px inset-x-px p-2 rounded-b-md bg-gray-100 dark:bg-slate-800">
+        <div class="flex justify-between items-center bg-gray-200 dark:bg-slate-900 rounded-lg p-2">
+          <!-- Button Group -->
+          <div class="flex items-center">
+            <!-- Format Button -->
+            <button id="dropdownFormatButton" data-dropdown-toggle="dropdownFormatRadio" type="button" class="inline-flex flex-shrink-0 justify-center items-center h-8 w-8 rounded-md text-gray-500 hover:text-blue-600 focus:z-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all dark:hover:text-blue-500">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"></path>
+              </svg>
+            </button>
+            <!-- Dropdown menu -->
+<div id="dropdownFormatRadio" class="z-10 hidden w-48 bg-white divide-y divide-gray-100 rounded-lg shadow dark:bg-slate-800 border border-slate-800 dark:border-gray-600 dark:divide-gray-600">
+  <ul aria-labelledby="dropdownFormatButton" class="p-3 space-y-3 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownRadioButton">
+    <li>
+      <div class="flex items-center">
+          <input checked id="text-radio" type="radio" value="" name="format-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+          <label for="text-radio" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Standard chat</label>
+      </div>
+    </li>
+    <li>
+      <div class="flex items-center">
+          <input id="bargraph-radio" type="radio" value="" name="format-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+          <label for="bargraph-radio" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Create bar graph</label>
+      </div>
+    </li>
+    <li>
+      <div class="flex items-center">
+          <input id="linegraph-radio" type="radio" value="" name="format-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+          <label for="linegraph-radio" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Create line graph</label>
+      </div>
+    </li>
+    <li>
+      <div class="flex items-center">
+          <input id="piechart-radio" type="radio" value="" name="format-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+          <label for="piechart-radio" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Create pie chart</label>
+      </div>
+    </li>
+    <li>
+      <div class="flex items-center">
+          <input id="table-radio" type="radio" value="" name="format-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+          <label for="table-radio" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Create table</label>
+      </div>
+    </li>
+  </ul>
+</div>
+            <!-- End Format Button -->
+
+            <!-- Attach Button -->
+            <label for="fileAttachInput" class="fileInputLabel">
+            <button id="attachFile" type="button" class="inline-flex flex-shrink-0 justify-center items-center h-8 w-8 rounded-md text-gray-500 hover:text-blue-600 focus:z-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all dark:hover:text-blue-500">
+              <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/>
+              </svg>
+            </button>
+            </label>
+            <input type="file" id="fileAttachInput" class="hidden">
+            <!-- End Attach Button -->
+          </div>
+          <!-- End Button Group -->
+
+          <!-- Button Group -->
+          <div class="flex items-center gap-x-1">
+
+            <!-- Send Button -->
+            <button id="sendChat" type="button" class="inline-flex flex-shrink-0 justify-center items-center h-8 w-8 rounded-md text-white bg-blue-600 hover:bg-blue-500 focus:z-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+              <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083l6-15Zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471-.47 1.178Z"/>
+              </svg>
+            </button>
+            <!-- End Send Button -->
+          </div>
+          <!-- End Button Group -->
+        </div>
+      </div>
+      <!-- End Toolbar -->
+    </div>
+    <!-- End Input -->
+  </footer>
+  <!-- End Search -->
+</div>
+<!-- End Content -->
+</section>
+<section id="newchat">
+  <!-- Content -->
+<div class="h-screen flex flex-col pb-6 w-full lg:pl-64">
+  <div class="h-full flex flex-col justify-center">
+    <div class="max-w-4xl w-full text-center mx-auto px-4 sm:px-6 lg:px-8">
+      <img class="w-10 h-10 mb-4 mx-auto" src="kpl-logo.png"></img>
+
+      <h1 class="text-3xl font-bold text-gray-800 sm:text-4xl dark:text-white">
+        KPL Analytics Dashboard
+      </h1>
+      <p class="mt-3 text-gray-600 dark:text-gray-400">
+        Library stats and reports powered by AI.
+      </p>
+    </div>
+
+    <!-- Search -->
+    <div class="mt-10 max-w-2xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="relative">
+        <input id="newinput" type="text" class="p-4 block w-full bg-gray-100 border-2 border-gray-200 rounded-full text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-gray-400" placeholder="Import data or ask me anything...">
+        <div class="absolute top-1/2 right-2 -translate-y-1/2 z-10">
+          <label for="fileInput" class="fileInputLabel">
+            <button id="fileImport" type="button" class="inline-flex flex-shrink-0 justify-center items-center h-10 w-10 rounded-full text-gray-500 hover:text-gray-800 focus:z-10 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all hover:ring-2 hover:ring-gray-200 dark:hover:ring-slate-700 dark:hover:text-white dark:focus:ring-blue-600 transition-all ease-in-out duration-300">
+              <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M7.646 5.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2z"/>
+                <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/>
+              </svg>
+            </button>
+          </label>
+          <input type="file" id="fileInput" class="hidden">
+        </div>
+      </div>
+    </div>
+    <!-- End Search -->
+    <div id="options" class="max-w-2xl rounded-full bg-gray-100 border-gray-200 border-2 dark:bg-slate-800 dark:border-slate-700 p-3 flex justify-between space-x-8 mx-auto mt-6">
+    <button id="startConversation" class="flex items-center text-center justify-center gap-x-1.5 py-2 px-6 text-sm rounded-full text-white font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-300">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"></path>
+      </svg>
+      Start conversation
+    </button>
+    <hr class="m-auto border-slate-700 dark:border-slate-300 opacity-40 rounded-full border-2 border-dashed">
+    <div id="workInProgress">
+    <button id="addToDashboard" title="Work in progress" class="flex items-center disabled text-center justify-center gap-x-1.5 py-2 px-6 text-sm rounded-full text-white font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-300">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 002.25-2.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v2.25A2.25 2.25 0 006 10.5zm0 9.75h2.25A2.25 2.25 0 0010.5 18v-2.25a2.25 2.25 0 00-2.25-2.25H6a2.25 2.25 0 00-2.25 2.25V18A2.25 2.25 0 006 20.25zm9.75-9.75H18a2.25 2.25 0 002.25-2.25V6A2.25 2.25 0 0018 3.75h-2.25A2.25 2.25 0 0013.5 6v2.25a2.25 2.25 0 002.25 2.25z"></path>
+      </svg>
+      Add to dashboard
+    </button>
+  </div>
+  </div>
+  </div>
+
+</div>
+<!-- End Content -->
+</section>
+<section id="dashboard" class="hidden bg-slate-800 opacity-30 pointer-events-none">
+  <div class="p-4 lg:ml-64 h-auto">
+    <div class="px-8 pb-8 pt-4 w-full flex justify-center">
+      <button id="dropdownSearchButton" data-dropdown-toggle="dropdownSearch" data-dropdown-placement="bottom" class="text-gray-900 dark:text-gray-200 mx-auto bg-white hover:bg-gray-100 focus:ring-2 focus:outline-none border-gray-200 border-2 focus:ring-blue-600 font-medium rounded-full text-sm px-5 py-2.5 text-center inline-flex items-center dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 dark:focus:ring-blue-600" type="button">Select dataset<svg class="w-2.5 h-2.5 ml-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+  </svg></button>
+    </div>
+    <!-- Dropdown menu -->
+<div id="dropdownSearch" class="z-10 hidden bg-gray-100 rounded-lg shadow w-60 dark:bg-slate-800">
+  <div class="p-3">
+    <label for="input-group-search" class="sr-only">Search</label>
+    <div class="relative">
+      <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+        </svg>
+      </div>
+      <input type="text" id="input-group-search" class="block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search data">
+    </div>
+  </div>
+  <ul class="h-48 px-3 pb-3 overflow-y-auto text-sm text-slate-700 dark:text-gray-200" aria-labelledby="dropdownSearchButton">
+    <li>
+      <div class="flex items-center pl-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
+        <input id="default-radio-1" type="radio" value="" name="default-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+        <label for="default-radio-1" class="w-full py-2 ml-2 text-sm font-medium text-gray-900 rounded dark:text-gray-300">Test Data 1</label>
+      </div>
+    </li>
+    <li>
+      <div class="flex items-center pl-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
+        <input id="default-radio-2" type="radio" value="" name="default-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+        <label for="default-radio-2" class="w-full py-2 ml-2 text-sm font-medium text-gray-900 rounded dark:text-gray-300">Test Data 2</label>
+        </div>
+    </li>
+    <li>
+      <div class="flex items-center pl-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
+        <input id="default-radio-3" type="radio" value="" name="default-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+        <label for="default-radio-3" class="w-full py-2 ml-2 text-sm font-medium text-gray-900 rounded dark:text-gray-300">Test Data 3</label>
+      </div>
+    </li>
+    <li>
+      <div class="flex items-center pl-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
+        <input id="default-radio-4" type="radio" value="" name="default-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+        <label for="default-radio-4" class="w-full py-2 ml-2 text-sm font-medium text-gray-900 rounded dark:text-gray-300">Test Data 4</label>
+      </div>
+    </li>
+    <li>
+      <div class="flex items-center pl-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
+        <input id="default-radio-5" type="radio" value="" name="default-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+        <label for="default-radio-5" class="w-full py-2 ml-2 text-sm font-medium text-gray-900 rounded dark:text-gray-300">Test Data 5</label>
+      </div>
+    </li>
+    <li>
+      <div class="flex items-center pl-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
+        <input id="default-radio-6" type="radio" value="" name="default-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+        <label for="default-radio-6" class="w-full py-2 ml-2 text-sm font-medium text-gray-900 rounded dark:text-gray-300">Test Data 6</label>
+      </div>
+    </li>
+          <li>
+      <div class="flex items-center pl-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
+        <input id="default-radio-7" type="radio" value="" name="default-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+        <label for="default-radio-7" class="w-full py-2 ml-2 text-sm font-medium text-gray-900 rounded dark:text-gray-300">Test Data 7</label>
+      </div>
+    </li>
+  </ul>
+  <div class="flex items-center p-3 text-sm font-medium border-t border-gray-300 dark:border-slate-700 text-red-600 justify-between">
+  <a href="#" class="flex items-center p-3 text-sm font-medium text-green-500 rounded-full dark:hover:bg-slate-700 hover:bg-gray-200">
+    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    Select
+</a>
+  <a href="#" class="flex items-center p-3 text-sm font-medium text-red-500 justify-between rounded-full dark:hover:bg-slate-700 hover:bg-gray-200">
+    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+    </svg>
+    Delete
+</a>
+</div>
+</div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+      <div
+        class="border-2 border-dashed border-gray-300 rounded-lg dark:border-gray-600 h-32 md:h-64"
+      ></div>
+      <div
+        class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600 h-32 md:h-64"
+      ></div>
+      <div
+        class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600 h-32 md:h-64"
+      ></div>
+      <div
+        class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600 h-32 md:h-64"
+      ></div>
+    </div>
+    <div
+      class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600 h-96 mb-4"
+    ></div>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div
+        class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600 h-48 md:h-72"
+      ></div>
+      <div
+        class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600 h-48 md:h-72"
+      ></div>
+      <div
+        class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600 h-48 md:h-72"
+      ></div>
+      <div
+        class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600 h-48 md:h-72"
+      ></div>
+    </div>
+    <div
+      class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600 h-96 mb-4"
+    ></div>
+    <div class="grid grid-cols-2 gap-4">
+      <div
+        class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600 h-48 md:h-72"
+      ></div>
+      <div
+        class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600 h-48 md:h-72"
+      ></div>
+      <div
+        class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600 h-48 md:h-72"
+      ></div>
+      <div
+        class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600 h-48 md:h-72"
+      ></div>
+    </div>
+  </div>
+</section>
+<section id="signin" class="hidden">
+  <div class="centered p-4 w-full sm:w-3/5 md:w-1/2 lg:w-2/5 xl:w-1/3">
+    <div class="bg-gray-50 border border-gray-200 rounded-xl shadow-sm dark:bg-slate-800 dark:border-slate-700">
+      <div class="p-4 sm:p-7">
+        <div class="text-center">
+          <h1 class="block text-2xl font-bold text-gray-800 dark:text-white">Sign in to KPL Analytics</h1>
+        </div>
+        <div class="mt-5">
+          <!-- Form -->
+          <form>
+            <div class="grid gap-y-4">
+              <!-- Form Group -->
+              <div>
+                <label for="email" class="block text-sm mb-2 dark:text-gray-300">Email address</label>
+                <div class="relative">
+                  <input type="email" id="email" name="email" class="py-3 px-4 block w-full border-gray-200 rounded-md text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 transition-all duration-300 ease-in-out" required aria-describedby="email-error">
+                  <div class="hidden absolute inset-y-0 right-0 flex items-center pointer-events-none pr-3">
+                    <svg class="h-5 w-5 text-red-500" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                    </svg>
+                  </div>
+                </div>
+                <p class="hidden text-xs text-red-600 mt-2" id="email-error">Please include a valid email address so we can get back to you</p>
+              </div>
+              <!-- End Form Group -->
+
+              <!-- Form Group -->
+              <div>
+                <div class="flex justify-between items-center">
+                  <label for="password" class="block text-sm mb-2 dark:text-gray-300">Password</label>
+                  <a class="text-sm text-blue-600 decoration-2 hover:underline font-medium transition-all duration-300 ease-in-out" href="mailto:lucasc@kpl.gov">Forgot password?</a>
+                </div>
+                <div class="relative">
+                  <input type="password" id="password" name="password" class="py-3 px-4 block w-full border-gray-200 rounded-md text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 transition-all duration-300 ease-in-out" required aria-describedby="password-error">
+                  <div class="hidden absolute inset-y-0 right-0 flex items-center pointer-events-none pr-3">
+                    <svg class="h-5 w-5 text-red-500" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                    </svg>
+                  </div>
+                </div>
+                <p class="hidden text-xs text-red-600 mt-2" id="password-error">8+ characters required</p>
+              </div>
+              <!-- End Form Group -->
+
+              <!-- Checkbox -->
+              <div class="flex items-center">
+                <div class="flex">
+                  <input id="remember-me" name="remember-me" type="checkbox" class="shrink-0 mt-0.5 border-gray-200 rounded text-blue-600 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800 transition-all duration-300 ease-in-out">
+                </div>
+                <div class="ml-3">
+                  <label for="remember-me" class="text-sm dark:text-gray-300">Remember me</label>
+                </div>
+              </div>
+              <!-- End Checkbox -->
+
+              <button type="submit" class="py-3 px-4 inline-flex justify-center items-center gap-2 rounded-md border border-transparent font-semibold bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm dark:focus:ring-offset-gray-800 transition-all duration-300 ease-in-out">Sign in</button>
+            </div>
+          </form>
+          <!-- End Form -->
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+    <script type="module" src="src/client/index.js"></script>
+    <script src="node_modules/preline/dist/preline.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.7.0/flowbite.min.js"></script>
+    <script src="node_modules/toastify-js/src/toastify.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+    <script>
+      function copyTextToClipboard(element) {
+  const button = element;
+  const spaceY3Div = button.parentElement.parentElement.parentElement.parentElement;
+  const pElement = spaceY3Div.querySelector('p');
+  const textToCopy = pElement.textContent;
+
+  const tempInput = document.createElement('textarea');
+  tempInput.value = textToCopy;
+  document.body.appendChild(tempInput);
+  tempInput.select();
+  document.execCommand('copy');
+  document.body.removeChild(tempInput);
+  Toastify({
+    text:'Copied to clipboard!',
+    duration: 2000, // Display duration in milliseconds
+    newWindow: true, // Open the toast in a new window/tab
+    gravity: "top", // Position of the toast (top, bottom, left, right)
+    position: "center", // Toast position within the gravity (center, left, right)
+    backgroundColor: "#4CAF50", // Light green background color
+    stopOnFocus: true, // Stop the toast from disappearing on focus
+    className: "custom-toast", // Add a custom CSS class for additional styling
+    // Additional options can be added here
+  }).showToast(); 
+}
+    </script>
+  </body>
+</html>
